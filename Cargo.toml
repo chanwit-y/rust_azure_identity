@@ -6,3 +6,13 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+azure_core = "0.17.0"
+azure_identity = { varsion = "0.17.0"}
+# azure_sdk_auth_aad = "0.47.0"
+dotenv = "0.15.0"
+futures = "0.3.29"
+# tokio = { version = "1", features = ["full"] }
+actix-web = "4"
+azure_storage_blobs = "0.17.0"
+azure_storage = "0.17.0"
+
