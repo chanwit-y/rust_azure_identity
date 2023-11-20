@@ -4,15 +4,22 @@ use azure_identity::client_credentials_flow;
 use azure_storage::prelude::*;
 use azure_storage_blobs::prelude::*;
 use dotenv::dotenv;
-use futures::StreamExt;
-use std::{env, error::Error, fs::File, io::Write};
+use futures::{io::BufReader, StreamExt};
+// use azure_storage::prelude::*;
+// use azure_storage_blobs::prelude::*;
+// use bytes::Bytes;
+use std::{env, error::Error, fs, fs::File, io::Write, os::unix::fs::FileExt};
 
 // #[tokio::main]
 #[actix_web::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     dotenv().ok();
 
-    download_blob().await?;
+    // download_blob().await?;
+    upload_file().await?;
+
+    // let file = read_file(&"./tmp/06_BNAC_JV_Jun 2023 1.pdf".to_string());
+    // println!("{:?}", file);
 
     Ok(())
 }
@@ -60,9 +67,9 @@ async fn download_blob() -> Result<(), Box<dyn Error>> {
     let mut file = File::create("./tmp/06_BNAC_JV_Jun 2023 1.pdf").expect("Unable to create file");
 
     while let Some(value) = stream.next().await {
-       let data = value?.data.collect().await?; 
+        let data = value?.data.collect().await?;
 
-         println!("received {:?} bytes", data.len());
+        println!("received {:?} bytes", data.len());
 
         file.write_all(data.as_ref()).expect("Unable to write data");
     }
@@ -94,6 +101,34 @@ async fn download_blob() -> Result<(), Box<dyn Error>> {
     //    let data = value?.data.collect().await?;
     //    println!("received {:?} bytes", data.len());
     // }
+
+    Ok(())
+}
+
+fn read_file(file_path: &String) -> Result<Vec<u8>, Box<dyn Error>> {
+    let res = fs::read(file_path);
+
+    match res {
+        Ok(data) => Ok(data),
+        Err(err) => Err(Box::new(err)),
+    }
+}
+
+async fn upload_file() -> Result<(), Box<dyn Error>> {
+    let account = env::var("STORAGE_ACCOUNT").unwrap();
+    let access_key = env::var("STORAGE_ACCESS_KEY").unwrap();
+    let container = env::var("STORAGE_CONTAINER").unwrap();
+
+    let storage_credentials = StorageCredentials::access_key(account.clone(), access_key);
+    let blob_client = BlobServiceClient::new(account, storage_credentials)
+        .container_client(container)
+        .blob_client("rust_upload.pdf");
+
+    let data = read_file(&"./tmp/06_BNAC_JV_Jun 2023 1.pdf".to_string())?;
+    // let hash = md5::compute(&data);
+
+    let res = blob_client.put_block_blob(data.clone()).content_type("application/pdf").await?;
+    println!("rust upload: {res:?}");
 
     Ok(())
 }
