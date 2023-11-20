@@ -15,10 +15,9 @@ use std::{env, error::Error, fs, fs::File, io::Write, os::unix::fs::FileExt};
 async fn main() -> Result<(), Box<dyn Error>> {
     dotenv().ok();
 
-    // download_blob().await?;
-    upload_file().await?;
+    download_blob().await?;
+    // upload_file().await?;
 
-    // let file = read_file(&"./tmp/06_BNAC_JV_Jun 2023 1.pdf".to_string());
     // println!("{:?}", file);
 
     Ok(())
@@ -57,14 +56,13 @@ async fn download_blob() -> Result<(), Box<dyn Error>> {
 
     let blob_client = service_client
         .container_client(&container)
-        .blob_client("06_BNAC_JV_Jun 2023 1.pdf");
+        .blob_client("rust_upload.pdf");
 
     // let mut stream = blob_client.get().;
 
-    // https://bpdevfilestore1.blob.core.windows.net/drop-zone/06_BNAC_JV_Jun 2023 1.pdf
 
     let mut stream = blob_client.get().into_stream();
-    let mut file = File::create("./tmp/06_BNAC_JV_Jun 2023 1.pdf").expect("Unable to create file");
+    let mut file = File::create("./download/rust_upload.pdf").expect("Unable to create file");
 
     while let Some(value) = stream.next().await {
         let data = value?.data.collect().await?;
@@ -124,7 +122,7 @@ async fn upload_file() -> Result<(), Box<dyn Error>> {
         .container_client(container)
         .blob_client("rust_upload.pdf");
 
-    let data = read_file(&"./tmp/06_BNAC_JV_Jun 2023 1.pdf".to_string())?;
+    let data = read_file(&"./tmp/test.pdf".to_string())?;
     // let hash = md5::compute(&data);
 
     let res = blob_client.put_block_blob(data.clone()).content_type("application/pdf").await?;
